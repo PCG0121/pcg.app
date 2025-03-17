@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Repair Tracker</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Laptop Repair Tracker</h1>
+            <button id="admin-access-btn" class="bg-blue-800 hover:bg-blue-900 px-4 py-2 rounded">Admin Access</button>
+        </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-blue-600 text-white">
+                    <h5 class="modal-title" id="loginModalLabel">Admin Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="admin-password" class="form-label">Password:</label>
+                            <input type="password" class="form-control" id="admin-password" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn bg-blue-600 text-white hover:bg-blue-700">Login</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer UI -->
+    <div id="customer-ui" class="container mx-auto py-8">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Track Your Repair</h2>
+            <form id="search-form" class="mb-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow">
+                        <label for="search-service-number" class="block text-sm font-medium text-gray-700 mb-1">Enter Service Number:</label>
+                        <input type="text" id="search-service-number" class="form-control" placeholder="e.g., SRV-12345" required>
+                    </div>
+                    <div class="self-end">
+                        <button type="submit" class="btn bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="repair-result" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Repair Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p><strong>Service Number:</strong> <span id="result-service-number"></span></p>
+                    <p><strong>Product Name:</strong> <span id="result-product-name"></span></p>
+                    <p><strong>Model:</strong> <span id="result-model"></span></p>
+                    <p><strong>Customer:</strong> <span id="result-customer-name"></span></p>
+                </div>
+                <div>
+                    <p><strong>Status:</strong> <span id="result-status" class="px-2 py-1 rounded text-white bg-yellow-500"></span></p>
+                    <p><strong>Estimated Completion:</strong> <span id="result-estimated-completion"></span></p>
+                    <p><strong>Issue Description:</strong> <span id="result-issue-description"></span></p>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">Repair Progress</h3>
+                    <div class="progress">
+                        <div id="progress-bar" class="progress-bar bg-blue-600" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="flex justify-between mt-2 text-sm">
+                        <span>Received</span>
+                        <span>In Progress</span>
+                        <span>Testing</span>
+                        <span>Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="search-error" class="bg-white rounded-lg shadow-lg p-6 mb-8 hidden">
+            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                <span class="font-medium">Error!</span> No service found with that number. Please try again.
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin UI (hidden initially) -->
+    <div id="admin-ui" class="container mx-auto py-8 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center border-b pb-4 mb-4">
+                <h2 class="text-xl font-bold text-blue-600">Admin Dashboard</h2>
+                <button id="logout-btn" class="btn bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded">Logout</button>
+            </div>
+            
+            <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list-tab-pane" type="button" role="tab" aria-controls="list-tab-pane" aria-selected="true">All Services</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add-tab-pane" type="button" role="tab" aria-controls="add-tab-pane" aria-selected="false">Add New Service</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="adminTabContent">
+                <!-- List Tab -->
+                <div class="tab-pane fade show active" id="list-tab-pane" role="tabpanel" aria-labelledby="list-tab" tabindex="0">
+                    <div class="mb-4">
+                        <input type="text" id="admin-search" class="form-control" placeholder="Search services...">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table table-striped table-hover">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th>Service Number</th>
+                                    <th>Product Name</th>
+                                    <th>Status</th>
+                                    <th>Model</th>
+                                    <th>Customer</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-repair-list">
+                                <!-- Dynamic content will be added here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Add Tab -->
+                <div class="tab-pane fade" id="add-tab-pane" role="tabpanel" aria-labelledby="add-tab" tabindex="0">
+                    <form id="repair-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="mb-3">
+                            <label for="service-number" class="form-label">Service Number:</label>
+                            <input type="text" class="form-control" id="service-number" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="product-name" class="form-label">Product Name:</label>
+                            <input type="text" class="form-control" id="product-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status:</label>
+                            <select class="form-select" id="status" required>
+                                <option value="">Select Status</option>
+                                <option value="Received">Received</option>
+                                <option value="Diagnosing">Diagnosing</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Testing">Testing</option>
+                                <option value="Ready for Pickup">Ready for Pickup</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="model" class="form-label">Model:</label>
+                            <input type="text" class="form-control" id="model" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="customer-name" class="form-label">Customer Name:</label>
+                            <input type="text" class="form-control" id="customer-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="issue-description" class="form-label">Issue Description:</label>
+                            <textarea class="form-control" id="issue-description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="estimated-completion" class="form-label">Estimated Completion:</label>
+                            <input type="date" class="form-control" id="estimated-completion" required>
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" class="btn bg-blue-600 text-white hover:bg-blue-700 w-full">Add Service</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-blue-600 text-white py-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Laptop Repair Tracker. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        document.getElementById('admin-access-btn').addEventListener('click', function() {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            if (password === 'admin123') {  // Example password
+                document.getElementById('admin-ui').classList.remove('hidden');
+                document.getElementById('customer-ui').classList.add('hidden');
+                const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                loginModal.hide();
+            } else {
+                alert('Incorrect password');
+            }
+        });
+
+        // Add service logic
+        document.getElementById('repair-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const serviceNumber = document.getElementById('service-number').value;
+            const productName = document.getElementById('product-name').value;
+            const status = document.getElementById('status').value;
+            const model = document.getElementById('model').value;
+            const customerName = document.getElementById('customer-name').value;
+            const issueDescription = document.getElementById('issue-description').value;
+            const estimatedCompletion = document.getElementById('estimated-completion').value;
+
+            const table = document.getElementById('admin-repair-list');
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td>${serviceNumber}</td>
+                <td>${productName}</td>
+                <td><span class="badge bg-${status === 'Completed' ? 'success' : 'warning'}">${status}</span></td>
+                <td>${model}</td>
+                <td>${customerName}</td>
+                <td><button class="btn btn-warning btn-sm edit-btn">Edit</button></td>
+            `;
+
+            document.getElementById('repair-form').reset();
+        });
+
+        document.getElementById('admin-repair-list').addEventListener('click', function(e) {
+            if (e.target.classList.contains('edit-btn')) {
+                // Handle edit logic
+                const row = e.target.closest('tr');
+                // Populate modal with data to edit
+            }
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            document.getElementById('admin-ui').classList.add('hidden');
+            document.getElementById('customer-ui').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
